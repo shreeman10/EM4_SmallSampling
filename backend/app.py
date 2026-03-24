@@ -69,7 +69,11 @@ def generate_sample(n: int = 10):
         )
         actual_endsem = max(0, min(100, actual_endsem))
         
+        # Compute AI prediction upfront so frontend can do live client-side math
+        ai_pred = int(model.predict(X_student)[0])
+        
         student["Actual"] = actual_endsem
+        student["AIPred"] = ai_pred
         students.append(student)
         
     return {"students": students}

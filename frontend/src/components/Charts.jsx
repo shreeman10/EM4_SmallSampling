@@ -83,7 +83,7 @@ export const ErrorBarChart = ({ results }) => {
       options={{
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 900, easing: 'easeOutQuart' },
+        animation: { duration: 250, easing: 'easeOutQuart' },
         plugins: { legend: LEGEND_BASE, tooltip: TOOLTIP_BASE },
         scales: AXES_BASE,
       }}
@@ -165,7 +165,7 @@ export const PredictionsLineChart = ({ results }) => {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
-        animation: { duration: 900, easing: 'easeOutQuart' },
+        animation: { duration: 250, easing: 'easeOutQuart' },
         plugins: { legend: LEGEND_BASE, tooltip: TOOLTIP_BASE },
         scales: AXES_BASE,
       }}
