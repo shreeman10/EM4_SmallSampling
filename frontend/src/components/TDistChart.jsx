@@ -9,7 +9,7 @@ import {
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 const DF   = 9;
-const MONO = "'Geist Mono','Fira Code',ui-monospace,monospace";
+const MONO = "'JetBrains Mono','Fira Code',ui-monospace,monospace";
 
 // t-distribution PDF constant for df=9
 // C = Γ(5) / (sqrt(9π) · Γ(4.5)) = 24 / (sqrt(9π) · 11.6317285)
@@ -54,9 +54,9 @@ const tDistPlugin = {
       ctx.restore();
     };
 
-    fillBand(-5,      -critVal, 'rgba(244,63,94,0.18)');   // left rejection (red)
-    fillBand( critVal,  5,      'rgba(244,63,94,0.18)');   // right rejection (red)
-    fillBand(-critVal,  critVal, 'rgba(59,130,246,0.06)'); // acceptance (blue)
+    fillBand(-5,      -critVal, 'rgba(244,63,94,0.10)');   // left rejection (red)
+    fillBand( critVal,  5,      'rgba(244,63,94,0.10)');   // right rejection (red)
+    fillBand(-critVal,  critVal, 'rgba(79,110,247,0.08)'); // acceptance (blue)
   },
 
   // Draw vertical lines AFTER the curve (on top)
@@ -82,18 +82,18 @@ const tDistPlugin = {
     };
 
     // Critical value dashed red lines
-    drawVLine(-critVal, 'rgba(244,63,94,0.7)', [4, 4]);
-    drawVLine( critVal, 'rgba(244,63,94,0.7)', [4, 4]);
+    drawVLine(-critVal, 'rgba(244,63,94,0.55)', [4, 4]);
+    drawVLine( critVal, 'rgba(244,63,94,0.55)', [4, 4]);
 
     // t-stat teal dashed line + label
     if (tStat != null && tStat >= xS.min && tStat <= xS.max) {
-      drawVLine(tStat, '#06B6D4', [6, 4], 2);
+      drawVLine(tStat, '#0EA5E9', [6, 4], 2);
       const px    = xS.getPixelForValue(tStat);
       const align = tStat >= 0 ? 'left' : 'right';
       const offX  = tStat >= 0 ? 6 : -6;
       ctx.save();
       ctx.font      = `bold 11px ${MONO}`;
-      ctx.fillStyle = '#06B6D4';
+      ctx.fillStyle = '#0EA5E9';
       ctx.textAlign = align;
       ctx.fillText(`t = ${tStat.toFixed(3)}`, px + offX, top + 16);
       ctx.restore();
@@ -118,8 +118,8 @@ export default function TDistChart({ tStat, critVal }) {
           data={{
             datasets: [{
               data: curveData,
-              borderColor: '#94A3B8',
-              borderWidth: 1.5,
+              borderColor: '#4F6EF7',
+              borderWidth: 2,
               pointRadius: 0,
               tension: 0.4,
               fill: false,
@@ -140,11 +140,11 @@ export default function TDistChart({ tStat, critVal }) {
                 type: 'linear',
                 min: -5,
                 max:  5,
-                grid:   { color: '#1F2D45' },
+                grid:   { color: '#E2E8F0' },
                 border: { display: false },
                 ticks: {
                   color: '#64748B',
-                  font:  { size: 11, family: MONO },
+                  font:  { size: 12, family: MONO },
                   stepSize: 1,
                   callback: v => v > 0 ? `+${v}` : `${v}`,
                 },
@@ -161,17 +161,18 @@ export default function TDistChart({ tStat, critVal }) {
       {/* Text summary line */}
       <p style={{
         marginTop: 12,
-        fontFamily: MONO,
-        fontSize: 12,
-        color: inRejection ? '#10B981' : '#64748B',
-        fontWeight: 500,
+        fontFamily: "'Inter', system-ui, sans-serif",
+        fontSize: 14,
+        color: '#64748B',
+        fontWeight: 400,
+        lineHeight: 1.6,
       }}>
         Your t-statistic of{' '}
-        <span style={{ color: '#06B6D4' }}>
+        <span style={{ ...{ fontFamily: MONO }, color: '#0EA5E9', fontWeight: 600 }}>
           {tStat != null ? tStat.toFixed(3) : '—'}
         </span>{' '}
         falls in the{' '}
-        <span style={{ color: inRejection ? '#10B981' : '#F43F5E', fontWeight: 700 }}>
+        <span style={{ ...{ fontFamily: MONO }, color: inRejection ? '#10B981' : '#F43F5E', fontWeight: 700 }}>
           {inRejection ? 'rejection' : 'acceptance'}
         </span>{' '}
         region (critical value: ±{critVal.toFixed(3)})

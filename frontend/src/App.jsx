@@ -6,7 +6,7 @@ import TDistChart from './components/TDistChart';
 import { ErrorBarChart, PredictionsLineChart } from './components/Charts';
 
 const API  = 'http://localhost:8000';
-const MONO = { fontFamily: "'Geist Mono','Fira Code',ui-monospace,monospace" };
+const MONO = { fontFamily: "'JetBrains Mono','Fira Code',ui-monospace,monospace" };
 
 /* ── α configuration ─────────────────────────────────── */
 const ALPHA_OPTS = [0.01, 0.05, 0.10];
@@ -62,33 +62,29 @@ function computeAnalysis(students, preds) {
 /* ── Metric card ─────────────────────────────────────── */
 const MetricCard = ({ label, value, sub, accentColor, valueColor, badge }) => (
   <div className="card-sm" style={{ display: 'flex', flexDirection: 'column' }}>
-    <div style={{ width: 40, height: 4, borderRadius: 9999, background: accentColor, marginBottom: 14 }} />
+    <div style={{ width: 40, height: 4, borderRadius: 9999, background: accentColor, opacity: 0.8, marginBottom: 14 }} />
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-      <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
         {label}
       </span>
       {badge && (
-        <span className="pill pill-sig pill" style={{
-          background: badge.sig ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
-          color:      badge.sig ? '#10B981' : '#F43F5E',
-          border:     `1px solid ${badge.sig ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}`,
-        }}>
+        <span className="pill pill-sig">
           {badge.label}
         </span>
       )}
     </div>
-    <p style={{ ...MONO, fontSize: 40, fontWeight: 700, lineHeight: 1, color: valueColor,
+    <p style={{ ...MONO, fontSize: 40, fontWeight: 800, lineHeight: 1, color: valueColor,
                 letterSpacing: '-0.02em', marginBottom: 6, transition: 'color 0.2s ease' }}>
       {value ?? '—'}
     </p>
-    {sub && <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>{sub}</p>}
+    {sub && <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>{sub}</p>}
   </div>
 );
 
 /* ── Alpha selector ──────────────────────────────────── */
 const AlphaSelector = ({ alpha, setAlpha }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-    <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em',
+    <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em',
                    textTransform: 'uppercase', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
       Significance Level (α)
     </span>
@@ -98,10 +94,10 @@ const AlphaSelector = ({ alpha, setAlpha }) => (
           key={a}
           onClick={() => setAlpha(a)}
           style={{
-            ...MONO, fontSize: 12, fontWeight: 600,
-            padding: '4px 14px', borderRadius: 9999, cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
+            padding: '5px 16px', borderRadius: 9999, cursor: 'pointer',
             border: alpha === a ? 'none' : '1px solid var(--border)',
-            background: alpha === a ? 'var(--accent-blue)' : 'transparent',
+            background: alpha === a ? 'var(--accent-blue)' : '#FFFFFF',
             color: alpha === a ? '#fff' : 'var(--text-muted)',
             transition: 'all 0.15s',
           }}
@@ -110,8 +106,8 @@ const AlphaSelector = ({ alpha, setAlpha }) => (
         </button>
       ))}
     </div>
-    <span style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-      Critical t-value (df=9): <span style={{ color: 'var(--text-primary)' }}>±{CRIT_T[alpha].toFixed(3)}</span>
+    <span style={{ ...MONO, fontSize: 13, color: 'var(--text-muted)' }}>
+      Critical t-value (df=9): <span style={{ color: 'var(--text-muted)' }}>±{CRIT_T[alpha].toFixed(3)}</span>
     </span>
   </div>
 );
@@ -165,19 +161,19 @@ export default function App() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
 
       {/* ── HEADER ── */}
-      <div style={{ borderBottom: '1px solid var(--border)' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', background: 'transparent' }}>
         <div style={{ ...page, paddingTop: 0, paddingBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, paddingBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 28, paddingBottom: 28 }}>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+              <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                 AI vs Human — Paired t-Test
               </h1>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 5 }}>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)', marginTop: 6 }}>
                 Small-sample statistical comparison · Manual implementation · No scipy
               </p>
             </div>
             <button className="btn-ghost" onClick={load} disabled={fetching}>
-              <RefreshCw size={13} style={fetching ? { animation: 'spin 1s linear infinite' } : {}} />
+              <RefreshCw size={14} style={fetching ? { animation: 'spin 1s linear infinite' } : {}} />
               {fetching ? 'Loading…' : 'New Sample'}
             </button>
           </div>
@@ -187,9 +183,9 @@ export default function App() {
       <div style={page}>
 
         {err && (
-          <div style={{ marginBottom: 24, borderLeft: '3px solid var(--accent-red)', background: 'rgba(244,63,94,0.06)', borderRadius: '0 8px 8px 0', padding: '12px 16px', display: 'flex', gap: 10 }}>
+          <div style={{ marginBottom: 24, borderLeft: '4px solid var(--accent-red)', background: '#FFF5F7', borderRadius: '0 8px 8px 0', padding: '12px 16px', display: 'flex', gap: 10 }}>
             <AlertTriangle size={14} color="var(--accent-red)" style={{ flexShrink: 0 }} />
-            <span style={{ ...MONO, fontSize: 13, color: 'var(--accent-red)' }}>{err}</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--accent-red)' }}>{err}</span>
           </div>
         )}
 
@@ -215,10 +211,10 @@ export default function App() {
                   ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>{fetching ? 'Generating…' : 'No data'}</td></tr>
                   : students.map(s => (
                     <tr key={s.id}>
-                      <td style={{ color: 'var(--text-muted)' }}>S{String(s.id).padStart(2,'0')}</td>
+                      <td style={{ color: 'var(--text-muted)', fontWeight: 500 }}>S{String(s.id).padStart(2,'0')}</td>
                       <td>{s.Mid1}</td><td>{s.Mid2}</td><td>{s.Internal}</td>
                       <td>{s.Attendance}</td><td>{s.StudyHours}</td><td>{s.SleepHours}</td>
-                      <td style={{ color: 'var(--accent-teal)' }}>{s.AIPred ?? '—'}</td>
+                      <td style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>{s.AIPred ?? '—'}</td>
                     </tr>
                   ))}
               </tbody>
@@ -238,7 +234,7 @@ export default function App() {
             <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
               {students.map(s => (
                 <div key={s.id}>
-                  <div style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
+                  <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, letterSpacing: '0.04em',
                                 textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 5 }}>
                     S{String(s.id).padStart(2,'0')}
                   </div>
@@ -255,11 +251,11 @@ export default function App() {
               ))}
             </div>
             {/* Live status indicator */}
-            <div style={{ marginTop: 16, padding: '10px 14px', background: 'var(--bg-input)', borderRadius: 8,
+            <div style={{ marginTop: 16, padding: '12px 16px', background: '#F0F4FF', borderRadius: 8,
                           border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>Current t-statistic</span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Current t-statistic</span>
               <span style={{ ...MONO, fontSize: 14, fontWeight: 700,
-                             color: sigDiff ? 'var(--accent-green)' : 'var(--accent-teal)',
+                             color: 'var(--accent-blue)',
                              transition: 'color 0.2s ease' }}>
                 {math ? math.t_stat.toFixed(3) : '—'}
               </span>
@@ -276,43 +272,41 @@ export default function App() {
               <MetricCard label="Mean Human Error" value={meanHuman} accentColor="var(--accent-red)"   valueColor="var(--accent-red)"   sub={!aiWins ? 'Human outperformed AI' : 'Human underperformed'} />
               <MetricCard label="t-Statistic"      value={math?.t_stat?.toFixed(3)}  accentColor="var(--accent-teal)" valueColor="var(--text-primary)" sub={`df = ${math?.df} · two-tailed`} />
               <MetricCard label="p-Value"          value={math?.p_value?.toFixed(4)} accentColor="var(--accent-blue)" valueColor="var(--accent-blue)"  sub={`α = ${alpha} threshold`}
-                badge={{ sig: sigDiff, label: sigDiff ? '✓ Significant' : 'Not sig.' }} />
+                badge={{ sig: sigDiff, label: sigDiff ? '✓ Significant' : '✗ Not sig.' }} />
             </div>
 
             {/* ── α selector ── */}
-            <div style={{ marginBottom: 16, padding: '14px 18px', background: 'var(--bg-card)',
-                          border: '1px solid var(--border)', borderRadius: 12 }}>
+            <div style={{ marginBottom: 16, padding: '14px 18px', background: '#F8FAFC',
+                          border: '1px solid var(--border)', borderRadius: 10 }}>
               <AlphaSelector alpha={alpha} setAlpha={setAlpha} />
             </div>
 
             {/* Verdict banner */}
             <div style={{
               marginBottom: 24,
-              background: sigDiff
-                ? 'linear-gradient(90deg,rgba(16,185,129,0.07),transparent)'
-                : 'linear-gradient(90deg,rgba(249,115,22,0.07),transparent)',
-              borderLeft: `3px solid ${sigDiff ? 'var(--accent-green)' : '#F97316'}`,
+              background: sigDiff ? '#F0FDF4' : '#FFF7ED',
+              borderLeft: `4px solid ${sigDiff ? '#10B981' : '#F97316'}`,
               borderRadius: '0 12px 12px 0',
               padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: 16,
               transition: 'border-color 0.3s ease, background 0.3s ease',
             }}>
               <div style={{
-                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                background: sigDiff ? 'rgba(16,185,129,0.12)' : 'rgba(249,115,22,0.12)',
+                width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                background: sigDiff ? 'rgba(16,185,129,0.18)' : 'rgba(249,115,22,0.18)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {sigDiff
-                  ? <CheckCircle2 size={15} color="var(--accent-green)" />
-                  : <AlertTriangle size={15} color="#F97316" />}
+                  ? <CheckCircle2 size={16} color="#059669" />
+                  : <AlertTriangle size={16} color="#F97316" />}
               </div>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 600,
-                            color: sigDiff ? 'var(--accent-green)' : '#F97316', marginBottom: 4,
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 500,
+                            color: sigDiff ? '#065F46' : '#9A3412', marginBottom: 4,
                             transition: 'color 0.2s ease' }}>
                   {sigDiff ? 'Reject H₀ — Statistically significant difference detected' : 'Fail to Reject H₀ — No significant difference found'}
                 </p>
-                <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
+                <p style={{ ...MONO, fontSize: 12, color: 'var(--text-muted)' }}>
                   H₀: μ_d = 0 &nbsp;·&nbsp; H₁: μ_d ≠ 0 &nbsp;·&nbsp; p = {math?.p_value?.toFixed(4)} &nbsp;·&nbsp; α = {alpha}
                 </p>
               </div>
@@ -321,7 +315,8 @@ export default function App() {
             {/* ── t-Distribution curve card (Feature 3) ── */}
             <div style={{
               marginBottom: 24,
-              background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24,
+              background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 16, padding: 24,
+              boxShadow: 'var(--shadow)',
             }}>
               <div className="card-label teal" style={{ marginBottom: 18 }}>
                 T-Distribution · df = 9
@@ -330,7 +325,7 @@ export default function App() {
             </div>
 
             {/* Prediction comparison matrix */}
-            <div style={{ marginBottom: 24, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+            <div style={{ marginBottom: 24, background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
               <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)' }}>
                 <div className="card-label green" style={{ marginBottom: 0 }}>Prediction Comparison Matrix</div>
               </div>
@@ -348,10 +343,10 @@ export default function App() {
                     const tie      = r.AIError === r.HumanError;
                     return (
                       <tr key={r.id}>
-                        <td style={{ color: 'var(--text-muted)', paddingLeft: 24 }}>S{String(r.id).padStart(2,'0')}</td>
+                        <td style={{ color: 'var(--text-muted)', paddingLeft: 24, fontWeight: 500 }}>S{String(r.id).padStart(2,'00')}</td>
                         <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.Actual}</td>
-                        <td style={{ color: 'var(--accent-teal)' }}>{r.AIPred}</td>
-                        <td style={{ color: 'var(--accent-red)' }}>{r.HumanPred}</td>
+                        <td style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>{r.AIPred}</td>
+                        <td style={{ color: 'var(--accent-red)', fontWeight: 600 }}>{r.HumanPred}</td>
                         <td style={{ color: 'var(--accent-blue)' }}>{r.AIError}</td>
                         <td style={{ color: !aiBetter && !tie ? 'var(--accent-red)' : 'var(--text-muted)' }}>{r.HumanError}</td>
                         <td>
@@ -368,7 +363,7 @@ export default function App() {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4} style={{ paddingLeft: 24, color: 'var(--text-muted)', fontSize: 11, textAlign: 'right' }}>
+                    <td colSpan={4} style={{ paddingLeft: 24, color: 'var(--text-muted)', fontSize: 13, textAlign: 'right' }}>
                       Aggregate mean errors →
                     </td>
                     <td style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{meanAI}</td>
@@ -381,13 +376,13 @@ export default function App() {
 
             {/* Charts */}
             <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column' }}>
+              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column', background: '#FFFFFF' }}>
                 <div className="card-label blue" style={{ marginBottom: 12 }}>Error Magnitude Comparison</div>
                 <div style={{ flex: 1, position: 'relative' }}>
                   <ErrorBarChart results={results} />
                 </div>
               </div>
-              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column' }}>
+              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column', background: '#FFFFFF' }}>
                 <div className="card-label teal" style={{ marginBottom: 12 }}>Prediction vs Actual Scores</div>
                 <div style={{ flex: 1, position: 'relative' }}>
                   <PredictionsLineChart results={results} />
