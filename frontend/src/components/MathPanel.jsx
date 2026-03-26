@@ -1,192 +1,161 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
 
-const mono = { fontFamily: 'var(--font-mono)' };
+const MONO = { fontFamily: "'Geist Mono','Fira Code',ui-monospace,monospace" };
 
-const StepLabel = ({ n, title }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-    <div style={{
-      width: 22, height: 22, borderRadius: '50%',
-      background: '#2563EB',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
-    }}>
-      <span style={{ ...mono, fontSize: 11, fontWeight: 700, color: '#fff' }}>{n}</span>
-    </div>
-    <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#7D8590' }}>
-      {title}
-    </span>
-  </div>
-);
-
-const CodeBlock = ({ children }) => (
+const StepBadge = ({ n }) => (
   <div style={{
-    background: '#080C10',
-    border: '1px solid #1C2128',
-    borderRadius: 8,
-    padding: '14px 16px',
-    ...mono,
-    fontSize: 13,
-    color: '#CDD9E5',
-    lineHeight: 1.8,
+    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+    background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
   }}>
-    {children}
+    <span style={{ ...MONO, fontSize: 11, fontWeight: 700, color: '#fff' }}>{n}</span>
   </div>
 );
 
-const Hi = ({ children }) => (
-  <span style={{ color: '#3B82F6', fontWeight: 600 }}>{children}</span>
+const StepCard = ({ n, title, children }) => (
+  <div className="card-inner">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <StepBadge n={n} />
+      <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        {title}
+      </span>
+    </div>
+    <div style={{ ...MONO, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.9 }}>
+      {children}
+    </div>
+  </div>
+);
+
+const Hi = ({ c = 'var(--accent-blue)', children }) => (
+  <span style={{ color: c, fontWeight: 600 }}>{children}</span>
 );
 
 const MathPanel = ({ mathProps }) => {
   const [open, setOpen] = useState(false);
-
   if (!mathProps) return null;
 
-  const f = (v, d) => (v === null || v === undefined) ? '—' : Number(v).toFixed(d);
+  const f = (v, d) => (v == null) ? '—' : Number(v).toFixed(d);
 
   try {
     const { differences, mean_diff, std_dev_diff, t_stat, df, cohens_d, ci_lower, ci_upper } = mathProps;
-    const n = differences?.length || 0;
+    const n       = differences?.length || 0;
     const diffSum = differences?.reduce((a, b) => a + Number(b), 0) || 0;
 
     return (
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
 
         {/* Toggle */}
         <button
           onClick={() => setOpen(o => !o)}
+          className="btn-ghost"
           style={{
             width: '100%',
-            display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px',
-            background: 'transparent',
+            borderRadius: 0,
             border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text)',
+            borderBottom: open ? '1px solid var(--border)' : 'none',
+            padding: '16px 24px',
+            color: 'var(--text-muted)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ ...mono, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+            <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               Mathematical Derivation
             </span>
-            <span style={{ ...mono, fontSize: 11, color: '#2563EB' }}>Paired t-Test · Manual</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--accent-teal)' }}>Paired t-Test · Manual</span>
           </div>
-          <ChevronDown
-            size={15}
-            color="#7D8590"
-            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}
-          />
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{open ? '▾ Hide' : '▸ Show'}</span>
         </button>
 
         {/* Accordion */}
-        <div className={`panel ${open ? 'panel-open' : 'panel-closed'}`}>
+        <div className={`panel ${open ? 'panel-open' : ''}`}>
           <div>
-            <div style={{ borderTop: '1px solid var(--border)', padding: '24px 24px 32px' }}>
+            <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-              {/* Grid of steps */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {/* 2x2 step grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-                {/* Step 1 */}
-                <div>
-                  <StepLabel n={1} title="Compute Differences (d = AI Error − Human Error)" />
-                  <CodeBlock>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {differences?.map((d, i) => {
-                        const pos = d > 0, neg = d < 0;
-                        return (
-                          <div key={i} style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            border: '1px solid',
-                            background: neg ? 'rgba(37,99,235,0.08)' : pos ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.03)',
-                            borderColor: neg ? 'rgba(37,99,235,0.2)' : pos ? 'rgba(239,68,68,0.2)' : '#1C2128',
-                            color: neg ? '#60A5FA' : pos ? '#F87171' : '#7D8590',
-                            fontSize: 12,
-                          }}>
-                            d{i+1} = {d > 0 ? '+' : ''}{f(d, 1)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div style={{ marginTop: 12, color: '#7D8590', fontSize: 12 }}>
-                      n = <Hi>{n}</Hi> &nbsp;·&nbsp; df = n−1 = <Hi>{df}</Hi>
-                    </div>
-                  </CodeBlock>
-                </div>
+                <StepCard n={1} title="Compute Differences (d = AI Error − Human Error)">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                    {differences?.map((d, i) => {
+                      const pos = d > 0, neg = d < 0;
+                      return (
+                        <span key={i} style={{
+                          padding: '3px 9px', borderRadius: 6, fontSize: 12,
+                          border: '1px solid',
+                          background: neg ? 'rgba(59,130,246,0.07)' : pos ? 'rgba(244,63,94,0.07)' : 'rgba(255,255,255,0.03)',
+                          borderColor: neg ? 'rgba(59,130,246,0.2)' : pos ? 'rgba(244,63,94,0.2)' : 'var(--border)',
+                          color: neg ? '#60A5FA' : pos ? '#F87171' : 'var(--text-muted)',
+                        }}>
+                          d{i+1} = {d > 0 ? '+' : ''}{f(d, 1)}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                    n = <Hi>{n}</Hi> &nbsp;·&nbsp; df = n−1 = <Hi>{df}</Hi>
+                  </span>
+                </StepCard>
 
-                {/* Step 2 */}
-                <div>
-                  <StepLabel n={2} title="Mean of Differences (d̄)" />
-                  <CodeBlock>
-                    d̄ = Σd / n<br />
-                    d̄ = {f(diffSum, 4)} / {n}<br />
-                    d̄ = <Hi>{f(mean_diff, 4)}</Hi>
-                  </CodeBlock>
-                </div>
+                <StepCard n={2} title="Mean of Differences (d̄)">
+                  d̄ = Σd / n<br/>
+                  d̄ = {f(diffSum, 4)} / {n}<br/>
+                  d̄ = <Hi c="var(--accent-teal)">{f(mean_diff, 4)}</Hi>
+                </StepCard>
 
-                {/* Step 3 */}
-                <div>
-                  <StepLabel n={3} title="Sample Std. Deviation (Sd)" />
-                  <CodeBlock>
-                    Sd = √[ Σ(d − d̄)² / (n−1) ]<br />
-                    Sd = <Hi>{f(std_dev_diff, 4)}</Hi>
-                  </CodeBlock>
-                </div>
+                <StepCard n={3} title="Sample Std. Deviation (Sd)">
+                  Sd = √[ Σ(d − d̄)² / (n−1) ]<br/>
+                  Sd = <Hi c="var(--accent-teal)">{f(std_dev_diff, 4)}</Hi>
+                </StepCard>
 
-                {/* Step 4 */}
-                <div>
-                  <StepLabel n={4} title="t-Statistic Formula" />
-                  <CodeBlock>
-                    t = d̄ / (Sd / √n)<br />
-                    t = {f(mean_diff, 4)} / ({f(std_dev_diff, 4)} / √{n})<br />
-                    t = <Hi>{f(t_stat, 4)}</Hi>
-                  </CodeBlock>
-                </div>
+                <StepCard n={4} title="t-Statistic">
+                  t = d̄ / (Sd / √n)<br/>
+                  t = {f(mean_diff, 4)} / ({f(std_dev_diff, 4)} / √{n})<br/>
+                  t = <Hi c="var(--accent-teal)">{f(t_stat, 4)}</Hi>
+                </StepCard>
               </div>
 
-              {/* Final t value wide card */}
+              {/* Final t-stat showcase */}
               <div style={{
-                marginTop: 24,
-                background: '#080C10',
-                border: '1px solid #1C2128',
-                borderRadius: 10,
-                padding: '28px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: 6,
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border)',
+                borderRadius: 14,
+                padding: '32px 24px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
               }}>
-                <span style={{ ...mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7D8590' }}>
+                <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                   Final t-Statistic
                 </span>
-                <span style={{ ...mono, fontSize: 52, fontWeight: 700, color: '#3B82F6', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                <span style={{
+                  ...MONO, fontSize: 56, fontWeight: 700, color: 'var(--accent-teal)',
+                  letterSpacing: '-0.03em', lineHeight: 1,
+                  textShadow: '0 0 40px rgba(6,182,212,0.4)',
+                }}>
                   {f(t_stat, 4)}
                 </span>
               </div>
 
               {/* Cohen's d + CI */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
-                <div style={{ background: '#080C10', border: '1px solid #1C2128', borderRadius: 8, padding: 16 }}>
-                  <p style={{ ...mono, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7D8590', marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="card-inner">
+                  <p style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 10 }}>
                     Cohen's d — Effect Size
                   </p>
-                  <p style={{ ...mono, fontSize: 28, fontWeight: 700, color: '#F0F6FC', marginBottom: 6 }}>{f(cohens_d, 3)}</p>
-                  <span className={`pill ${Math.abs(cohens_d) >= 0.8 ? 'pill-blue' : 'pill-muted'}`}>
+                  <p style={{ ...MONO, fontSize: 32, fontWeight: 700, color: 'var(--accent-blue)', marginBottom: 8 }}>{f(cohens_d, 3)}</p>
+                  <span className={`pill ${Math.abs(cohens_d) >= 0.5 ? 'pill-teal' : 'pill-muted'}`}>
                     {Math.abs(cohens_d) < 0.2 ? 'Negligible' : Math.abs(cohens_d) < 0.5 ? 'Small' : Math.abs(cohens_d) < 0.8 ? 'Medium' : 'Large'} effect
                   </span>
                 </div>
-                <div style={{ background: '#080C10', border: '1px solid #1C2128', borderRadius: 8, padding: 16 }}>
-                  <p style={{ ...mono, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7D8590', marginBottom: 8 }}>
+                <div className="card-inner">
+                  <p style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 10 }}>
                     95% Confidence Interval
                   </p>
-                  <p style={{ ...mono, fontSize: 28, fontWeight: 700, color: '#F0F6FC', marginBottom: 6 }}>
-                    [{f(ci_lower, 2)}, {f(ci_upper, 2)}]
+                  <p style={{ ...MONO, fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.01em' }}>
+                    <span style={{ fontSize: 36, color: 'var(--text-muted)' }}>[</span>
+                    {f(ci_lower, 2)},&nbsp;{f(ci_upper, 2)}
+                    <span style={{ fontSize: 36, color: 'var(--text-muted)' }}>]</span>
                   </p>
-                  <span style={{ ...mono, fontSize: 11, color: '#7D8590' }}>Of true mean difference</span>
+                  <span style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Of true mean difference μ_d</span>
                 </div>
               </div>
 
@@ -195,10 +164,10 @@ const MathPanel = ({ mathProps }) => {
         </div>
       </div>
     );
-  } catch (error) {
+  } catch (e) {
     return (
-      <div className="card" style={{ borderLeft: '3px solid var(--red)', borderRadius: '0 12px 12px 0' }}>
-        <p style={{ ...mono, fontSize: 12, color: 'var(--red)' }}>Render error: {error.message}</p>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>
+        <p style={{ ...MONO, fontSize: 12, color: 'var(--accent-red)' }}>Render error: {e.message}</p>
       </div>
     );
   }

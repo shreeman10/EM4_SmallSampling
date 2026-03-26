@@ -1,32 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { RefreshCw, Play, CheckCircle2, AlertTriangle, Bot, User } from 'lucide-react';
 import MathPanel from './components/MathPanel';
 import { ErrorBarChart, PredictionsLineChart } from './components/Charts';
 
 const API = 'http://localhost:8000';
+const MONO = { fontFamily: 'var(--font-mono)' };
 
-/* ── tiny helpers ─────────────────────────────────── */
-const mono = { fontFamily: 'var(--font-mono)' };
-const Label = ({ children }) => <p className="label">{children}</p>;
+/* ── Count-up hook ───────────────────────────────────── */
+function useCountUp(target, duration = 800) {
+  const [display, setDisplay] = useState(null);
+  const raf = useRef(null);
+  useEffect(() => {
+    if (target === null) return;
+    const num = parseFloat(target);
+    if (isNaN(num)) { setDisplay(target); return; }
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      const decimals = String(target).includes('.') ? String(target).split('.')[1].length : 0;
+      setDisplay((num * ease).toFixed(decimals));
+      if (p < 1) raf.current = requestAnimationFrame(tick);
+      else setDisplay(target);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [target]);
+  return display;
+}
 
-/* ── stat card ────────────────────────────────────── */
-const MetricCard = ({ label, value, sub, valueColor = 'var(--white)', badge }) => (
-  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-      <span style={{ ...mono, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-        {label}
-      </span>
-      {badge && <span className={`pill pill-${badge.color}`}>{badge.text}</span>}
+/* ── Metric card with count-up ───────────────────────── */
+const MetricCard = ({ label, value, sub, accentColor, valueColor, badge, className = '' }) => {
+  const animated = useCountUp(value);
+  return (
+    <div className={`card-sm fade-up ${className}`} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {/* color bar */}
+      <div style={{ width: 40, height: 4, borderRadius: 9999, background: accentColor, marginBottom: 16 }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <span style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+          {label}
+        </span>
+        {badge && <span className="pill-sig pill">{badge}</span>}
+      </div>
+      <p style={{ ...MONO, fontSize: 42, fontWeight: 700, lineHeight: 1, color: valueColor, letterSpacing: '-0.02em', marginBottom: 8 }}>
+        {animated ?? '—'}
+      </p>
+      {sub && <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>{sub}</p>}
     </div>
-    <p style={{ ...mono, fontSize: 36, fontWeight: 700, lineHeight: 1, color: valueColor, letterSpacing: '-0.02em' }}>
-      {value ?? '—'}
-    </p>
-    {sub && <p style={{ ...mono, fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{sub}</p>}
-  </div>
-);
+  );
+};
 
-/* ── App ──────────────────────────────────────────── */
+/* ── App ─────────────────────────────────────────────── */
 export default function App() {
   const [students, setStudents] = useState([]);
   const [preds,    setPreds]    = useState({});
@@ -49,7 +74,6 @@ export default function App() {
   };
 
   useEffect(() => { load(); }, []);
-
   const change = (id, v) => setPreds(p => ({ ...p, [id]: v }));
 
   const run = async () => {
@@ -66,40 +90,37 @@ export default function App() {
     setLoading(false);
   };
 
-  /* derived values */
-  const meanAI    = results ? (results.reduce((a, r) => a + r.AIError, 0) / results.length).toFixed(2) : null;
+  const meanAI    = results ? (results.reduce((a, r) => a + r.AIError,    0) / results.length).toFixed(2) : null;
   const meanHuman = results ? (results.reduce((a, r) => a + r.HumanError, 0) / results.length).toFixed(2) : null;
   const aiWins    = results ? +meanAI <= +meanHuman : null;
   const sigDiff   = math   && math.p_value < 0.05;
 
-  /* ── layout ──────────────────────────────────────── */
   const page = {
-    maxWidth: 1200,
+    maxWidth: 1280,
     margin: '0 auto',
-    padding: '0 48px',
-    paddingTop: 48,
+    padding: '0 56px',
+    paddingTop: 44,
     paddingBottom: 80,
   };
-  const sectionGap = { marginBottom: 24 };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080C10' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
 
-      {/* ── HEADER ──────────────────────────────────── */}
-      <div style={{ borderBottom: '1px solid var(--border)', marginBottom: 40 }}>
+      {/* ── HEADER ────────────────────────────────────── */}
+      <div style={{ borderBottom: '1px solid var(--border)' }}>
         <div style={{ ...page, paddingTop: 0, paddingBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, paddingBottom: 24 }}>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 600, color: 'var(--white)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
                 AI vs Human — Paired t-Test
               </h1>
-              <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 5, letterSpacing: '0.01em' }}>
                 Small-sample statistical comparison · Manual implementation · No scipy
               </p>
             </div>
             <button className="btn-ghost" onClick={load} disabled={fetching}>
               <RefreshCw size={13} style={fetching ? { animation: 'spin 1s linear infinite' } : {}} />
-              {fetching ? 'Loading…' : 'New Sample'}
+              {fetching ? 'Regenerating…' : 'New Sample'}
             </button>
           </div>
         </div>
@@ -107,22 +128,22 @@ export default function App() {
 
       <div style={page}>
 
-        {/* ── ERROR ────────────────────────────────── */}
+        {/* Error */}
         {err && (
-          <div style={{ ...sectionGap, borderLeft: '3px solid var(--red)', background: 'rgba(239,68,68,0.06)', borderRadius: '0 8px 8px 0', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={14} color="var(--red)" />
-            <span style={{ fontSize: 13, color: 'var(--red)', ...mono }}>{err}</span>
+          <div style={{ marginBottom: 24, borderLeft: '3px solid var(--accent-red)', background: 'rgba(244,63,94,0.06)', borderRadius: '0 8px 8px 0', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={14} color="var(--accent-red)" />
+            <span style={{ ...MONO, fontSize: 13, color: 'var(--accent-red)' }}>{err}</span>
           </div>
         )}
 
-        {/* ── SECTION 1: Dataset + Inputs ─────────── */}
-        <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: '1fr 380px', gap: 16, alignItems: 'start' }}>
+        {/* ── ROW 1: Dataset + Inputs ──────────────────── */}
+        <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: 16 }}>
 
-          {/* Student table */}
-          <div className="card">
-            <Label>Student Dataset Sample</Label>
-            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
-              10 randomly generated students — EndSem hidden until comparison runs
+          {/* Dataset card */}
+          <div className="card fade-up">
+            <div className="card-label teal">Student Dataset Sample</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+              10 randomly generated students · EndSem hidden until analysis runs
             </p>
             <table className="data-table">
               <thead>
@@ -134,33 +155,28 @@ export default function App() {
               </thead>
               <tbody>
                 {students.length === 0
-                  ? <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px 0', color: 'var(--muted)' }}>{fetching ? 'Fetching…' : 'No data'}</td></tr>
+                  ? <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>{fetching ? 'Generating…' : 'No data'}</td></tr>
                   : students.map(s => (
                     <tr key={s.id}>
-                      <td style={{ color: 'var(--muted)' }}>S{String(s.id).padStart(2, '0')}</td>
-                      <td>{s.Mid1}</td>
-                      <td>{s.Mid2}</td>
-                      <td>{s.Internal}</td>
-                      <td>{s.Attendance}</td>
-                      <td>{s.StudyHours}</td>
-                      <td>{s.SleepHours}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>S{String(s.id).padStart(2, '0')}</td>
+                      <td>{s.Mid1}</td><td>{s.Mid2}</td><td>{s.Internal}</td>
+                      <td>{s.Attendance}</td><td>{s.StudyHours}</td><td>{s.SleepHours}</td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
 
-          {/* Prediction form */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            <Label>Enter Predictions</Label>
-            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 18 }}>
+          {/* Prediction card */}
+          <div className="card fade-up d1" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="card-label blue">Human Predictions</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 18 }}>
               Enter your estimated EndSem score (0–100) for each student.
             </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px', flex: 1 }}>
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
               {students.map(s => (
                 <div key={s.id}>
-                  <div style={{ ...mono, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 5 }}>
+                  <div style={{ ...MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 5 }}>
                     S{String(s.id).padStart(2, '0')}
                   </div>
                   <input
@@ -174,86 +190,69 @@ export default function App() {
                 </div>
               ))}
             </div>
-
             <button
               className="btn-primary"
               onClick={run}
               disabled={loading || students.length === 0}
-              style={{ width: '100%', justifyContent: 'center', marginTop: 20 }}
+              style={{ marginTop: 20 }}
             >
-              <Play size={12} fill="currentColor" />
-              {loading ? 'Running analysis…' : 'Execute Analysis Protocol'}
+              <Play size={13} fill="currentColor" />
+              {loading ? 'Running Analysis…' : 'Execute Analysis Protocol'}
             </button>
           </div>
         </div>
 
-        {/* ── SECTION 2-N: Results ─────────────────── */}
+        {/* ── RESULTS ──────────────────────────────────── */}
         {results && (
-          <div className="fade-up">
-
+          <div>
             {/* Metric cards */}
-            <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              <MetricCard
-                label="Mean AI Error"
-                value={meanAI}
-                sub={aiWins ? 'AI model wins' : 'AI underperformed'}
-                valueColor={aiWins ? 'var(--green)' : 'var(--white)'}
-              />
-              <MetricCard
-                label="Mean Human Error"
-                value={meanHuman}
-                sub={!aiWins ? 'Human wins' : 'Human underperformed'}
-                valueColor="#EF4444"
-              />
-              <MetricCard
-                label="t-Statistic"
-                value={math?.t_stat?.toFixed(3)}
-                sub={`df = ${math?.df}`}
-                valueColor="var(--white)"
-              />
-              <MetricCard
-                label="p-Value"
-                value={math?.p_value?.toFixed(4)}
-                sub="α = 0.05 threshold"
-                valueColor="#3B82F6"
-                badge={sigDiff ? { color: 'green', text: 'Significant' } : { color: 'muted', text: 'Not sig.' }}
-              />
+            <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+              <MetricCard className="d1" label="Mean AI Error"    value={meanAI}    sub={aiWins ? 'AI model outperformed human' : 'AI underperformed'} accentColor="var(--accent-green)" valueColor="var(--accent-green)" />
+              <MetricCard className="d2" label="Mean Human Error" value={meanHuman} sub={!aiWins ? 'Human outperformed AI' : 'Human underperformed'}   accentColor="var(--accent-red)"   valueColor="var(--accent-red)"   />
+              <MetricCard className="d3" label="t-Statistic"      value={math?.t_stat?.toFixed(3)}  sub={`df = ${math?.df} · two-tailed`}     accentColor="var(--accent-teal)"  valueColor="var(--text-primary)" />
+              <MetricCard className="d4" label="p-Value"          value={math?.p_value?.toFixed(4)} sub="α = 0.05 significance threshold"     accentColor="var(--accent-blue)"  valueColor="var(--accent-blue)"  badge={sigDiff ? 'Significant' : 'Not sig.'} />
             </div>
 
-            {/* Significance verdict */}
+            {/* Verdict banner */}
             <div style={{
-              ...sectionGap,
-              borderLeft: `3px solid ${sigDiff ? 'var(--green)' : '#F97316'}`,
-              background: sigDiff ? 'rgba(34,197,94,0.05)' : 'rgba(249,115,22,0.05)',
-              borderRadius: '0 8px 8px 0',
+              marginBottom: 24,
+              background: sigDiff ? 'linear-gradient(90deg,rgba(16,185,129,0.06),transparent)' : 'linear-gradient(90deg,rgba(249,115,22,0.06),transparent)',
+              borderLeft: `3px solid ${sigDiff ? 'var(--accent-green)' : '#F97316'}`,
+              borderRadius: '0 12px 12px 0',
               padding: '16px 20px',
               display: 'flex',
-              alignItems: 'flex-start',
-              gap: 14,
+              alignItems: 'center',
+              gap: 16,
             }}>
-              {sigDiff
-                ? <CheckCircle2 size={16} color="var(--green)" style={{ flexShrink: 0, marginTop: 2 }} />
-                : <AlertTriangle size={16} color="#F97316" style={{ flexShrink: 0, marginTop: 2 }} />}
+              <div style={{
+                width: 28, height: 28, flexShrink: 0, borderRadius: '50%',
+                background: sigDiff ? 'rgba(16,185,129,0.12)' : 'rgba(249,115,22,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {sigDiff
+                  ? <CheckCircle2 size={15} color="var(--accent-green)" />
+                  : <AlertTriangle size={15} color="#F97316" />}
+              </div>
               <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: sigDiff ? 'var(--green)' : '#F97316', marginBottom: 4 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: sigDiff ? 'var(--accent-green)' : '#F97316', marginBottom: 4 }}>
                   {sigDiff ? 'Reject H₀ — Statistically significant difference detected' : 'Fail to Reject H₀ — No significant difference found'}
                 </p>
-                <p style={{ ...mono, fontSize: 11, color: 'var(--muted)' }}>
+                <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
                   H₀: μ_d = 0 &nbsp;·&nbsp; H₁: μ_d ≠ 0 &nbsp;·&nbsp; Two-tailed &nbsp;·&nbsp; p = {math?.p_value?.toFixed(4)}
                 </p>
               </div>
             </div>
 
-            {/* Results table */}
-            <div className="card" style={{ ...sectionGap, padding: 0, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-                <Label>Prediction Comparison Matrix</Label>
+            {/* Comparison matrix */}
+            <div style={{ marginBottom: 24, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)' }}>
+                <div className="card-label green" style={{ marginBottom: 0 }}>Prediction Comparison Matrix</div>
               </div>
               <table className="data-table">
                 <thead>
                   <tr>
                     {['Student', 'Actual', 'AI Prediction', 'Human Prediction', 'AI Error', 'Human Error', 'Superior'].map((h, i) => (
-                      <th key={i} style={{ paddingLeft: i === 0 ? 20 : 14 }}>{h}</th>
+                      <th key={i} style={{ paddingLeft: i === 0 ? 24 : 14 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -263,18 +262,18 @@ export default function App() {
                     const tie      = r.AIError === r.HumanError;
                     return (
                       <tr key={r.id}>
-                        <td style={{ color: 'var(--muted)', paddingLeft: 20 }}>S{String(r.id).padStart(2, '0')}</td>
-                        <td style={{ color: 'var(--white)', fontWeight: 600 }}>{r.Actual}</td>
-                        <td style={{ color: '#60A5FA' }}>{r.AIPred}</td>
-                        <td style={{ color: '#F87171' }}>{r.HumanPred}</td>
-                        <td style={{ color: '#3B82F6' }}>{r.AIError}</td>
-                        <td style={{ color: !aiBetter && !tie ? 'var(--red)' : 'var(--muted)' }}>{r.HumanError}</td>
+                        <td style={{ color: 'var(--text-muted)', paddingLeft: 24 }}>S{String(r.id).padStart(2, '0')}</td>
+                        <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.Actual}</td>
+                        <td style={{ color: 'var(--accent-teal)' }}>{r.AIPred}</td>
+                        <td style={{ color: 'var(--accent-red)' }}>{r.HumanPred}</td>
+                        <td style={{ color: 'var(--accent-blue)' }}>{r.AIError}</td>
+                        <td style={{ color: !aiBetter && !tie ? 'var(--accent-red)' : 'var(--text-muted)' }}>{r.HumanError}</td>
                         <td>
                           {tie
                             ? <span className="pill pill-muted">Tie</span>
                             : aiBetter
                               ? <span className="pill pill-blue"><Bot size={10}/> AI</span>
-                              : <span className="pill pill-muted"><User size={10}/> Human</span>
+                              : <span className="pill pill-green"><User size={10}/> Human</span>
                           }
                         </td>
                       </tr>
@@ -282,10 +281,10 @@ export default function App() {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{ borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
-                    <td colSpan={4} style={{ paddingLeft: 20, color: 'var(--muted)', fontSize: 11, textAlign: 'right' }}>Mean errors →</td>
-                    <td style={{ color: '#3B82F6', fontWeight: 700 }}>{meanAI}</td>
-                    <td style={{ color: 'var(--red)', fontWeight: 700 }}>{meanHuman}</td>
+                  <tr>
+                    <td colSpan={4} style={{ paddingLeft: 24, color: 'var(--text-muted)', fontSize: 11, textAlign: 'right' }}>Aggregate mean errors →</td>
+                    <td style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{meanAI}</td>
+                    <td style={{ color: 'var(--accent-red)', fontWeight: 700 }}>{meanHuman}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -293,33 +292,26 @@ export default function App() {
             </div>
 
             {/* Charts */}
-            <div style={{ ...sectionGap, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="card" style={{ height: 360 }}>
-                <Label>Error Magnitude Comparison</Label>
-                <div style={{ height: 'calc(100% - 30px)', position: 'relative' }}>
+            <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column' }}>
+                <div className="card-label blue" style={{ marginBottom: 12 }}>Error Magnitude Comparison</div>
+                <div style={{ flex: 1, position: 'relative' }}>
                   <ErrorBarChart results={results} />
                 </div>
               </div>
-              <div className="card" style={{ height: 360 }}>
-                <Label>Prediction vs Actual Scores</Label>
-                <div style={{ height: 'calc(100% - 30px)', position: 'relative' }}>
+              <div className="card" style={{ height: 380, display: 'flex', flexDirection: 'column' }}>
+                <div className="card-label teal" style={{ marginBottom: 12 }}>Prediction vs Actual Scores</div>
+                <div style={{ flex: 1, position: 'relative' }}>
                   <PredictionsLineChart results={results} />
                 </div>
               </div>
             </div>
 
             {/* Math proof */}
-            <div style={sectionGap}>
-              <MathPanel mathProps={math} />
-            </div>
-
+            <MathPanel mathProps={math} />
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }
