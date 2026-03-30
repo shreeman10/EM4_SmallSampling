@@ -26,17 +26,27 @@ function approxPValue(tStat, df) {
 }
 
 function computeAnalysis(students, preds) {
-  if (!students.length) return { results: null, math: null };
+  if (!students.length) return { results: null, math: null, inputError: '' };
   const n = students.length;
 
   const rows = students.map(s => {
-    const raw      = parseFloat(preds[s.id]);
-    const humanPred = isNaN(raw) ? 0 : Math.max(0, Math.min(100, raw));
+    const rawValue = preds[s.id];
+    const raw      = parseFloat(rawValue);
+    const valid    = rawValue !== '' && rawValue !== undefined && !isNaN(raw) && raw >= 0 && raw <= 100;
+    const humanPred = valid ? raw : null;
     const aiError   = Math.abs(s.Actual - s.AIPred);
-    const humanError = Math.abs(s.Actual - humanPred);
+    const humanError = valid ? Math.abs(s.Actual - humanPred) : null;
     return { id: s.id, Actual: s.Actual, AIPred: s.AIPred, HumanPred: humanPred,
-             AIError: aiError, HumanError: humanError };
+             AIError: aiError, HumanError: humanError, valid };
   });
+
+  if (rows.some(r => !r.valid)) {
+    return {
+      results: null,
+      math: null,
+      inputError: 'Enter valid scores (0-100) for all students to view results.',
+    };
+  }
 
   const diffs    = rows.map(r => r.AIError - r.HumanError);
   const meanDiff = diffs.reduce((a, b) => a + b, 0) / n;
@@ -56,6 +66,7 @@ function computeAnalysis(students, preds) {
       t_stat: tStat, p_value: pValue, df,
       cohens_d: cohensD, ci_lower: meanDiff - margin, ci_upper: meanDiff + margin,
     },
+    inputError: '',
   };
 }
 
@@ -121,7 +132,7 @@ export default function App() {
   const [err,      setErr]      = useState('');
 
   /* Live computation — runs on every keystroke, no button needed */
-  const { results, math } = useMemo(
+  const { results, math, inputError } = useMemo(
     () => computeAnalysis(students, preds),
     [students, preds]
   );
@@ -149,10 +160,12 @@ export default function App() {
   const critT     = CRIT_T[alpha];
   const sigDiff   = math && math.p_value < alpha;
 
-  /* Input validity: highlight empties as invalid */
+  /* Input validity: highlight empty/non-numeric/out-of-range values */
   const isInvalid = id => {
     const v = preds[id];
-    return v !== '' && v !== undefined && isNaN(parseFloat(v));
+    if (v === '' || v === undefined) return true;
+    const parsed = parseFloat(v);
+    return isNaN(parsed) || parsed < 0 || parsed > 100;
   };
 
   const page = { maxWidth: 1280, margin: '0 auto', padding: '0 56px', paddingTop: 44, paddingBottom: 80 };
@@ -248,6 +261,11 @@ export default function App() {
                 </div>
               ))}
             </div>
+            {inputError && (
+              <p style={{ marginTop: 12, fontSize: 12, color: 'var(--accent-red)' }}>
+                {inputError}
+              </p>
+            )}
             {/* Live status indicator */}
             <div style={{ marginTop: 16, padding: '12px 16px', background: '#F0F4FF', borderRadius: 8,
                           border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
